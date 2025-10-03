@@ -6,7 +6,8 @@ from lib.sensors.gyro_navx2 import Gyro_NAVX2
 from lib.sensors.pose import PoseSensor
 from core.commands.auto import Auto
 from core.commands.game import Game
-from core.subsystems.drive import Drive
+from core.subsystems.drive import Drive 
+from core.subsystems.arm import Arm
 from core.services.localization import Localization
 import core.constants as constants
 
@@ -27,6 +28,7 @@ class RobotCore:
     
   def _initSubsystems(self) -> None:
     self.drive = Drive(self.gyro.getHeading)
+    self.arm = Arm()
     
   def _initServices(self) -> None:
     self.localization = Localization(
@@ -52,8 +54,8 @@ class RobotCore:
     self.drive.setDefaultCommand(self.drive.drive(self.driver.getLeftY, self.driver.getRightX))
     # self.driver.rightStick().whileTrue(cmd.none())
     # self.driver.leftStick().whileTrue(cmd.none())
-    # self.driver.rightTrigger().whileTrue(cmd.none())
-    # self.driver.leftTrigger().whileTrue(cmd.none())
+    self.driver.rightTrigger().whileTrue(self.arm.setPosition(1))
+    self.driver.leftTrigger().whileTrue(self.arm.setPosition(-1))
     # self.driver.rightBumper().whileTrue(cmd.none())
     # self.driver.leftBumper().whileTrue(cmd.none())
     # self.driver.povUp().whileTrue(cmd.none())

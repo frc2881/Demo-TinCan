@@ -11,7 +11,8 @@ from rev import SparkLowLevel
 from lib import logger, utils
 from lib.classes import (
   Alliance, 
-  PID, 
+  PID,
+  Range, 
   Tolerance,
   DifferentialModuleConstants, 
   DifferentialModuleConfig, 
@@ -19,7 +20,9 @@ from lib.classes import (
   DriftCorrectionConstants, 
   TargetAlignmentConstants,
   PoseSensorConstants,
-  PoseSensorConfig
+  PoseSensorConfig,
+  PositionControlModuleConfig,
+  PositionControlModuleConstants
 )
 from core.classes import Target, TargetType
 
@@ -76,6 +79,26 @@ class Subsystems:
       rotationHeadingModeOffset = 0,
       rotationTranslationModeOffset = 180.0
     )
+
+  class Arm:
+    kArmConfig = PositionControlModuleConfig("Arm", 10, None, True, PositionControlModuleConstants(
+      distancePerRotation = 1.0,
+      motorControllerType = SparkLowLevel.SparkModel.kSparkFlex,
+      motorType = SparkLowLevel.MotorType.kBrushed,
+      motorCurrentLimit = 80,
+      motorReduction = 1.0 / 1.0,
+      motorPID = PID(0.1, 0, 0.07),
+      motorOutputRange = Range(-1.0, 0.3),
+      motorMotionMaxVelocity = 15000.0,
+      motorMotionMaxAcceleration = 30000.0,
+      motorMotionVelocityFF = 1.0 / 6784,
+      motorMotionAllowedClosedLoopError = 0.25,
+      motorSoftLimitForward = 35.0,
+      motorSoftLimitReverse = 1.0,
+      motorResetSpeed = 0.4
+    ))
+
+    kInputLimit: units.percent = 1.0
 
 class Services:
   class Localization:
