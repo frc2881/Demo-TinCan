@@ -44,19 +44,16 @@ class LimitPositionControlModule:
       .setIdleMode(SparkBaseConfig.IdleMode.kBrake)
       .smartCurrentLimit(self._config.constants.motorCurrentLimit)
       .inverted(self._config.isInverted))
-    if self._config.leaderMotorCANId is not None:
-      self._motorConfig.follow(self._config.leaderMotorCANId, self._config.isInverted)
-    else:
-      self._motorConfig.apply(
+    self._motorConfig.apply(
         LimitSwitchConfig()
         .forwardLimitSwitchEnabled(True)
-        .forwardLimitSwitchType(LimitSwitchConfig.Type.kNormallyOpen))
+        .forwardLimitSwitchType(LimitSwitchConfig.Type.kNormallyClosed)
+        .reverseLimitSwitchEnabled(True)
+        .reverseLimitSwitchType(LimitSwitchConfig.Type.kNormallyClosed))
 
-      (self._motorConfig.softLimit
-        .reverseSoftLimitEnabled(True)
-        .reverseSoftLimit(self._config.constants.motorSoftLimitReverse)
-        .forwardSoftLimitEnabled(True)
-        .forwardSoftLimit(self._config.constants.motorSoftLimitForward))
+    (self._motorConfig.softLimit
+    .reverseSoftLimitEnabled(False)
+    .forwardSoftLimitEnabled(False))
     utils.setSparkConfig(
       self._motor.configure(
         self._motorConfig,
@@ -86,7 +83,7 @@ class LimitPositionControlModule:
       position = 0.0
 
     self._targetPosition = position
-    self._motor.set(0.2 * position)
+    self._motor.set(0.5 * position)
 
     self._isAtTargetPosition = math.isclose(self.getPosition(), self._targetPosition, abs_tol = self._config.constants.motorMotionAllowedClosedLoopError)
 
@@ -118,6 +115,8 @@ class LimitPositionControlModule:
     SmartDashboard.putBoolean(f'{self._baseKey}/IsAtTargetPosition', self._isAtTargetPosition)
     SmartDashboard.putNumber(f'{self._baseKey}/Current', self._motor.getOutputCurrent())
     SmartDashboard.putNumber(f'{self._baseKey}/Position', self.getPosition())
+    SmartDashboard.putBoolean(f'{self._baseKey}/ForwardLimit', self._forwardLimit.get())
+    SmartDashboard.putBoolean(f'{self._baseKey}/ReverseLimit', self._reverseLimit.get())
 
 
 class Arm(Subsystem):
@@ -136,8 +135,14 @@ class Arm(Subsystem):
       .setIdleMode(SparkBaseConfig.IdleMode.kBrake)
       .smartCurrentLimit(self._config.constants.motorCurrentLimit)
       .inverted(self._config.isInverted))
-    if self._config.leaderMotorCANId is not None:
-      self._motorConfig.follow(10, True)
+    self._motorConfig.follow(10, True)
+    utils.setSparkConfig(
+      self._motor.configure(
+        self._motorConfig,
+        SparkBase.ResetMode.kResetSafeParameters,
+        SparkBase.PersistMode.kPersistParameters
+      )
+    )
 
 
   def periodic(self) -> None:

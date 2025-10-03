@@ -83,7 +83,7 @@ class Subsystems:
   class Arm:
     kArmConfig = PositionControlModuleConfig("Arm", 10, None, True, PositionControlModuleConstants(
       distancePerRotation = 1.0,
-      motorControllerType = SparkLowLevel.SparkModel.kSparkFlex,
+      motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
       motorType = SparkLowLevel.MotorType.kBrushed,
       motorCurrentLimit = 80,
       motorReduction = 1.0 / 1.0,

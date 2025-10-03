@@ -52,6 +52,7 @@ class RobotCore:
 
   def _setupDriver(self) -> None:
     self.drive.setDefaultCommand(self.drive.drive(self.driver.getLeftY, self.driver.getRightX))
+    self.arm.setDefaultCommand(self.arm.setPosition(0))
     # self.driver.rightStick().whileTrue(cmd.none())
     # self.driver.leftStick().whileTrue(cmd.none())
     self.driver.rightTrigger().whileTrue(self.arm.setPosition(1))
