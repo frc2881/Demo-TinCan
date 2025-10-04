@@ -165,12 +165,6 @@ class Arm(Subsystem):
   def isAtTargetPosition(self) -> bool:
     return self._arm.isAtTargetPosition()
 
-  def resetToZero(self) -> Command:
-    return self._arm.resetToZero(self).withName("Arm:ResetToZero")
-
-  def hasZeroReset(self) -> bool:
-    return self._arm.hasZeroReset()
-
   def reset(self) -> None:
     self._arm.reset()
 

@@ -9,3 +9,7 @@ class TargetType(Enum):
 class Target():
   type: TargetType
   pose: Pose3d
+
+class RotationDirection(Enum):
+  Forward = auto()
+  Reverse = auto()

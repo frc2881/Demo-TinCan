@@ -1,5 +1,7 @@
 from commands2 import Command, cmd
 from wpilib import DriverStation, SmartDashboard
+from core.classes import RotationDirection
+from core.subsystems.gripper import Gripper
 from lib import logger, utils
 from lib.controllers.xbox import Xbox
 from lib.sensors.gyro_navx2 import Gyro_NAVX2
@@ -29,6 +31,7 @@ class RobotCore:
   def _initSubsystems(self) -> None:
     self.drive = Drive(self.gyro.getHeading)
     self.arm = Arm()
+    self.gripper = Gripper()
     
   def _initServices(self) -> None:
     self.localization = Localization(
@@ -53,16 +56,17 @@ class RobotCore:
   def _setupDriver(self) -> None:
     self.drive.setDefaultCommand(self.drive.drive(self.driver.getLeftY, self.driver.getRightX))
     self.arm.setDefaultCommand(self.arm.setPosition(0))
+    self.gripper.setDefaultCommand(self.gripper.stop())
     # self.driver.rightStick().whileTrue(cmd.none())
     # self.driver.leftStick().whileTrue(cmd.none())
-    self.driver.rightTrigger().whileTrue(self.arm.setPosition(1))
-    self.driver.leftTrigger().whileTrue(self.arm.setPosition(-1))
-    # self.driver.rightBumper().whileTrue(cmd.none())
-    # self.driver.leftBumper().whileTrue(cmd.none())
+    self.driver.rightBumper().whileTrue(self.arm.setPosition(1))
+    self.driver.leftBumper().whileTrue(self.arm.setPosition(-1))
+    self.driver.rightTrigger().whileTrue(self.gripper.intake())
+    self.driver.leftTrigger().whileTrue(self.gripper.score())
     # self.driver.povUp().whileTrue(cmd.none())
     # self.driver.povDown().whileTrue(cmd.none())
-    # self.driver.povLeft().whileTrue(cmd.none())
-    # self.driver.povRight().whileTrue(cmd.none())
+    self.driver.povLeft().whileTrue(self.gripper.spin(RotationDirection.Forward))
+    self.driver.povRight().whileTrue(self.gripper.spin(RotationDirection.Reverse))
     # self.driver.a().whileTrue(cmd.none())
     # self.driver.b().whileTrue(cmd.none())
     # self.driver.x().whileTrue(cmd.none())

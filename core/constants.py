@@ -100,6 +100,14 @@ class Subsystems:
 
     kInputLimit: units.percent = 1.0
 
+  class Gripper:
+    kFrontMotorId = 12
+    kBackMotorId = 13
+    kMotorType = SparkLowLevel.MotorType.kBrushed 
+    kMotorSpeed: units.percent = 0.50
+    kMotorCurrentLimit = 20
+
+
 class Services:
   class Localization:
     kVisionMaxTargetDistance: units.meters = 4.0
