@@ -24,13 +24,6 @@ class Gripper(Subsystem):
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters))
 
-  def spin(self, direction: RotationDirection) -> Command:
-    multiplier = 1.0 if direction == RotationDirection.Forward else -1.0
-    return self.run(lambda: [
-      self._frontMotor.set(self._config.kMotorSpeed * multiplier),
-      self._backMotor.set(self._config.kMotorSpeed * multiplier)
-    ])
-
   def intake(self) -> Command:
     return self.run(lambda: [
       self._frontMotor.set(-self._config.kMotorSpeed),

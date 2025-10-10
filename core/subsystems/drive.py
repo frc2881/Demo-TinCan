@@ -98,7 +98,7 @@ class Drive(Subsystem):
     ).withName("Drive:Drive")
 
   def _drive(self, speed: float, rotation: float) -> None:
-    self._drivetrain.arcadeDrive(speed, rotation, True)
+    self._drivetrain.arcadeDrive(speed, rotation, False)
 
   def setChassisSpeeds(self, chassisSpeeds: ChassisSpeeds, driveFeedforwards: DriveFeedforwards = None) -> None:
     self._setModuleStates(chassisSpeeds)

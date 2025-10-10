@@ -104,7 +104,7 @@ class Subsystems:
     kFrontMotorId = 12
     kBackMotorId = 13
     kMotorType = SparkLowLevel.MotorType.kBrushed 
-    kMotorSpeed: units.percent = 0.50
+    kMotorSpeed: units.percent = 1.0
     kMotorCurrentLimit = 20
 
 
