@@ -11,7 +11,7 @@ if TYPE_CHECKING: from core.robot import RobotCore
 import core.constants as constants
 
 class AutoPath(Enum):
-  Move1 = auto()
+  Move_1 = auto()
 
 class Auto:
   def __init__(
@@ -62,5 +62,5 @@ class Auto:
 
   def auto_1(self) -> Command:
     return cmd.sequence(
-      self._move(AutoPath.Move1)
+      self._move(AutoPath.Move_1)
     ).withName("Auto:[1]")

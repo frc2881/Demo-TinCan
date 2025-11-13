@@ -19,13 +19,13 @@ from commands2 import Command, cmd, Subsystem
 from wpimath import units
 from wpilib import SmartDashboard
 from rev import SparkBase, SparkBaseConfig, SparkLowLevel, SparkMax, SparkFlex, LimitSwitchConfig
-from lib.classes import PositionControlModuleConfig, MotorDirection, Value
+from lib.classes import RelativePositionControlModuleConfig, MotorDirection, Value
 from lib import logger, utils
 
 class LimitPositionControlModule:
   def __init__(
     self,
-    config: PositionControlModuleConfig
+    config: RelativePositionControlModuleConfig
   ) -> None:
     self._config = config
 

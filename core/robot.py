@@ -1,7 +1,5 @@
 from commands2 import Command, cmd
 from wpilib import DriverStation, SmartDashboard
-from core.classes import RotationDirection
-from core.subsystems.gripper import Gripper
 from lib import logger, utils
 from lib.controllers.xbox import Xbox
 from lib.sensors.gyro_navx2 import Gyro_NAVX2
@@ -10,6 +8,7 @@ from core.commands.auto import Auto
 from core.commands.game import Game
 from core.subsystems.drive import Drive 
 from core.subsystems.arm import Arm
+from core.subsystems.gripper import Gripper
 from core.services.localization import Localization
 import core.constants as constants
 
@@ -115,8 +114,12 @@ class RobotCore:
   def reset(self) -> None:
     self.drive.reset()
 
-  def _hasAllZeroResets(self) -> bool:
-    return utils.isCompetitionMode() or True
+  def _isHomed(self) -> bool:
+    return (
+      True
+      if not utils.isCompetitionMode() else 
+      True
+    )
 
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean("Robot/Status/HasAllZeroResets", self._hasAllZeroResets())
+    SmartDashboard.putBoolean("Robot/Status/IsHomed", self._isHomed())

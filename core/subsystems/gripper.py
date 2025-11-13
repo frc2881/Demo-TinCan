@@ -1,7 +1,6 @@
 from commands2 import Subsystem, cmd, Command
 from rev import SparkBase, SparkBaseConfig, SparkMax, SparkMaxConfig
 import core.constants as constants
-from core.classes import RotationDirection
 from lib import utils  
 
 class Gripper(Subsystem):

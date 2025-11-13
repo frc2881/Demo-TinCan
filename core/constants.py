@@ -1,13 +1,13 @@
+import wpilib
 from wpimath import units
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import DifferentialDriveKinematics
-import wpilib
 from robotpy_apriltag import AprilTagFieldLayout
 from navx import AHRS
+from rev import SparkLowLevel
 from pathplannerlib.config import RobotConfig
 from pathplannerlib.controller import PPLTVController
 from photonlibpy.photonPoseEstimator import PoseStrategy
-from rev import SparkLowLevel
 from lib import logger, utils
 from lib.classes import (
   Alliance, 
@@ -21,10 +21,13 @@ from lib.classes import (
   TargetAlignmentConstants,
   PoseSensorConstants,
   PoseSensorConfig,
-  PositionControlModuleConfig,
-  PositionControlModuleConstants
+  RelativePositionControlModuleConfig,
+  RelativePositionControlModuleConstants
 )
-from core.classes import Target, TargetType
+from core.classes import (
+  Target, 
+  TargetType
+)
 
 APRIL_TAG_FIELD_LAYOUT = AprilTagFieldLayout(f'{ wpilib.getDeployDirectory() }/localization/default.json')
 PATHPLANNER_ROBOT_CONFIG = RobotConfig.fromGUISettings()
@@ -81,8 +84,7 @@ class Subsystems:
     )
 
   class Arm:
-    kArmConfig = PositionControlModuleConfig("Arm", 10, None, True, PositionControlModuleConstants(
-      distancePerRotation = 1.0,
+    kArmConfig = RelativePositionControlModuleConfig("Arm", 10, True, RelativePositionControlModuleConstants(
       motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
       motorType = SparkLowLevel.MotorType.kBrushed,
       motorCurrentLimit = 80,
@@ -91,11 +93,11 @@ class Subsystems:
       motorOutputRange = Range(-1.0, 0.3),
       motorMotionMaxVelocity = 15000.0,
       motorMotionMaxAcceleration = 30000.0,
-      motorMotionVelocityFF = 1.0 / 6784,
       motorMotionAllowedClosedLoopError = 0.25,
       motorSoftLimitForward = 35.0,
       motorSoftLimitReverse = 1.0,
-      motorResetSpeed = 0.4
+      motorResetSpeed = 0.4,
+      distancePerRotation = 1.0
     ))
 
     kInputLimit: units.percent = 1.0
@@ -106,7 +108,6 @@ class Subsystems:
     kMotorType = SparkLowLevel.MotorType.kBrushed 
     kMotorSpeed: units.percent = 1.0
     kMotorCurrentLimit = 20
-
 
 class Services:
   class Localization:
@@ -130,10 +131,10 @@ class Sensors:
       # PoseSensorConfig(
       #   "Front",
       #   Transform3d(
-      #     Translation3d(units.inchesToMeters(9.0), units.inchesToMeters(1.5), units.inchesToMeters(18.5)),
-      #     Rotation3d(units.degreesToRadians(0), units.degreesToRadians(11.0), units.degreesToRadians(0))
+      #     Translation3d(units.inchesToMeters(0), units.inchesToMeters(0), units.inchesToMeters(0)),
+      #     Rotation3d(units.degreesToRadians(0), units.degreesToRadians(0), units.degreesToRadians(0))
       #   ), _poseSensorConstants
-      # )
+      # ),
     )
 
   class Camera:
