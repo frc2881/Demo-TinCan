@@ -129,19 +129,25 @@ class Sensors:
 
     kPoseSensorConfigs: tuple[PoseSensorConfig, ...] = (
       # PoseSensorConfig(
-      #   "Front",
-      #   Transform3d(
-      #     Translation3d(units.inchesToMeters(0), units.inchesToMeters(0), units.inchesToMeters(0)),
-      #     Rotation3d(units.degreesToRadians(0), units.degreesToRadians(0), units.degreesToRadians(0))
-      #   ), _poseSensorConstants
+      #   name = "Front",
+      #   transform = Transform3d(
+      #     Translation3d(x = units.inchesToMeters(5.886), y = units.inchesToMeters(-2.177), z = units.inchesToMeters(10.674)),
+      #     Rotation3d(roll = units.degreesToRadians(-0.106), pitch = units.degreesToRadians(-10.387), yaw = units.degreesToRadians(1.167))
+      #   ), 
+      #   stream = "http://10.28.81.6:1182/?action=stream", 
+      #   constants = _poseSensorConstants
       # ),
     )
 
-  class Camera:
-    kStreams: dict[str, str] = {
-      "Front": "http://10.28.81.6:1184/?action=stream",
-      "Driver": "http://10.28.81.6:1184/?action=stream"
-    }
+    # # DEBUG: use for empirical calculation of robot to camera transform for each pose sensor configuration using fixed target measured from robot and targetPose averages from PhotonVision
+    # robotToCamera = utils.getRobotToCameraTransform(
+    #   targetToRobot = Transform3d(Translation3d(0.860, 0, -0.311), Rotation3d().fromDegrees(0, 0, -180.0)),
+    #   targetToCamera = Transform3d(Translation3d(.707, .041, -0.089), Rotation3d(Quaternion(-0.01, -0.09, 0.0, -0.99)))
+    # )
+    # logger.debug(robotToCamera)
+
+class Cameras:
+  kDriverStream = "http://10.28.81.6:1182/?action=stream"
 
 class Controllers:
   kDriverControllerPort: int = 0
