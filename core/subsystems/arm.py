@@ -29,7 +29,7 @@ class LimitPositionControlModule:
   ) -> None:
     self._config = config
 
-    self._baseKey = f'Robot/{self._config.moduleBaseKey}'
+    self._baseKey = f'Robot/{self._config.baseKey}'
 
     self._hasZeroReset: bool = False
     self._targetPosition: float = Value.none
