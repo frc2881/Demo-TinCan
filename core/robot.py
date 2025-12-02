@@ -49,10 +49,10 @@ class RobotCore:
     self.auto = Auto(self)
 
   def _initTriggers(self) -> None:
-    self._setupDriverController()
-    self._setupOperatorController()
+    self._setupDriver()
+    self._setupOperator()
 
-  def _setupDriverController(self) -> None:
+  def _setupDriver(self) -> None:
     self.drive.setDefaultCommand(self.drive.drive(self.driver.getLeftY, self.driver.getRightX))
     self.arm.setDefaultCommand(self.arm.setPosition(0))
     self.gripper.setDefaultCommand(self.gripper.stop())
@@ -73,7 +73,7 @@ class RobotCore:
     # self.driver.start().onTrue(cmd.none())
     self.driver.back().whileTrue(cmd.waitSeconds(0.5).andThen(self.gyro.reset()))
 
-  def _setupOperatorController(self) -> None:
+  def _setupOperator(self) -> None:
     pass
     # self.operator.rightTrigger().whileTrue(cmd.none())
     # self.operator.leftTrigger().whileTrue(cmd.none())
