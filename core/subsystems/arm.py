@@ -123,7 +123,7 @@ class Arm(Subsystem):
   def __init__(self) -> None:
     super().__init__()
     self._constants = constants.Subsystems.Arm
-    self._config = self._constants.kArmConfig
+    self._config = self._constants.ARM_CONFIG
 
     self._hasInitialZeroReset: bool = False
 
@@ -150,7 +150,7 @@ class Arm(Subsystem):
 
   def setSpeed(self, getInput: Callable[[], units.percent]) -> Command:
     return self.runEnd(
-      lambda: self._arm.setSpeed(getInput() * self._constants.kInputLimit),
+      lambda: self._arm.setSpeed(getInput() * self._constants.INPUT_LIMIT),
       lambda: self.reset()
     ).withName("Arm:SetSpeed")
   
