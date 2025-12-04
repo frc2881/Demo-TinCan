@@ -86,9 +86,6 @@ class Drive(Subsystem):
     idleMode.onChange(lambda idleMode: self._setIdleMode(idleMode))
     SmartDashboard.putData("Robot/Drive/IdleMode", idleMode)
 
-    SmartDashboard.putNumber("Robot/Drive/Chassis/RobotLength", self._constants.kRobotLength)
-    SmartDashboard.putNumber("Robot/Drive/Chassis/RobotWidth", self._constants.kRobotWidth)
-
   def periodic(self) -> None:
     self._updateTelemetry()
 
