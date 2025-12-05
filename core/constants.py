@@ -20,7 +20,7 @@ from lib.classes import (
   DriftCorrectionConstants, 
   TargetAlignmentConstants,
   PoseSensorConstants,
-  PoseSensorConfig,
+  PoseSensorConfig, 
   RelativePositionControlModuleConfig,
   RelativePositionControlModuleConstants
 )
@@ -29,8 +29,8 @@ from core.classes import (
   TargetType
 )
 
-_APRILTAG_FIELD_LAYOUT = AprilTagFieldLayout(f'{ wpilib.getDeployDirectory() }/localization/default.json')
-_PATHPLANNER_ROBOT_CONFIG = RobotConfig.fromGUISettings()
+_aprilTagFieldLayout = AprilTagFieldLayout(f'{ wpilib.getDeployDirectory() }/localization/default.json')
+_pathPlannerRobotConfig = RobotConfig.fromGUISettings()
 
 class Subsystems:
   class Drive:
@@ -62,7 +62,7 @@ class Subsystems:
 
     DRIVE_KINEMATICS = DifferentialDriveKinematics(TRACK_WIDTH)
 
-    PATHPLANNER_ROBOT_CONFIG = _PATHPLANNER_ROBOT_CONFIG
+    PATHPLANNER_ROBOT_CONFIG = _pathPlannerRobotConfig
     PATHPLANNER_CONTROLLER = PPLTVController(0.02)
 
     DRIFT_CORRECTION_CONSTANTS = DriftCorrectionConstants(
@@ -122,7 +122,7 @@ class Sensors:
 
   class Pose:
     _poseSensorConstants = PoseSensorConstants(
-      aprilTagFieldLayout = _APRILTAG_FIELD_LAYOUT,
+      aprilTagFieldLayout = _aprilTagFieldLayout,
       poseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
       fallbackPoseStrategy = PoseStrategy.LOWEST_AMBIGUITY
     )
@@ -149,17 +149,16 @@ class Game:
     pass
 
   class Field:
-    APRILTAG_FIELD_LAYOUT = _APRILTAG_FIELD_LAYOUT
-    LENGTH = _APRILTAG_FIELD_LAYOUT.getFieldLength()
-    WIDTH = _APRILTAG_FIELD_LAYOUT.getFieldWidth()
+    LENGTH = _aprilTagFieldLayout.getFieldLength()
+    WIDTH = _aprilTagFieldLayout.getFieldWidth()
     BOUNDS = (Translation2d(0, 0), Translation2d(LENGTH, WIDTH))
 
     class Targets:
       TARGETS: dict[Alliance, dict[int, Target]] = {
         Alliance.Red: {
-          utils.getTargetHash(_APRILTAG_FIELD_LAYOUT.getTagPose(1).toPose2d()): Target(TargetType.Default, _APRILTAG_FIELD_LAYOUT.getTagPose(1))
+          utils.getTargetHash(_aprilTagFieldLayout.getTagPose(1).toPose2d()): Target(TargetType.Default, _aprilTagFieldLayout.getTagPose(1))
         },
         Alliance.Blue: {
-          utils.getTargetHash(_APRILTAG_FIELD_LAYOUT.getTagPose(2).toPose2d()): Target(TargetType.Default, _APRILTAG_FIELD_LAYOUT.getTagPose(2))
+          utils.getTargetHash(_aprilTagFieldLayout.getTagPose(2).toPose2d()): Target(TargetType.Default, _aprilTagFieldLayout.getTagPose(2))
         }
       }
