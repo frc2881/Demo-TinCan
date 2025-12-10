@@ -10,6 +10,7 @@ from pathplannerlib.controller import PPLTVController
 from photonlibpy.photonPoseEstimator import PoseStrategy
 from lib import logger, utils
 from lib.classes import (
+  RobotType,
   Alliance, 
   PID,
   Range, 
@@ -144,7 +145,11 @@ class Controllers:
   OPERATOR_CONTROLLER_PORT: int = 1
   INPUT_DEADBAND: units.percent = 0.1
 
-class Game: 
+class Game:
+  class Robot:
+    TYPE = RobotType.Demo
+    NAME: str = "TinCan"
+
   class Commands:
     pass
 
