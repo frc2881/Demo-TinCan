@@ -1,5 +1,5 @@
 from commands2 import Subsystem, cmd, Command
-from rev import SparkBase, SparkBaseConfig, SparkMax, SparkMaxConfig
+from rev import SparkBaseConfig, SparkMax, ResetMode, PersistMode
 import core.constants as constants
 from lib import utils  
 
@@ -14,14 +14,8 @@ class Gripper(Subsystem):
       .setIdleMode(SparkBaseConfig.IdleMode.kBrake)
       .smartCurrentLimit(self._config.MOTOR_CURRENT_LIMIT)
       .inverted(False))
-    utils.setSparkConfig(
-      self._frontMotor.configure(self._motorConfig,
-        SparkBase.ResetMode.kResetSafeParameters,
-        SparkBase.PersistMode.kPersistParameters))
-    utils.setSparkConfig(
-      self._backMotor.configure(self._motorConfig,
-        SparkBase.ResetMode.kResetSafeParameters,
-        SparkBase.PersistMode.kPersistParameters))
+    utils.setSparkConfig(self._frontMotor.configure(self._motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters))
+    utils.setSparkConfig(self._backMotor.configure(self._motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters))
 
   def intake(self) -> Command:
     return self.run(lambda: [

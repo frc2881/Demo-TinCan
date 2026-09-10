@@ -1,24 +1,15 @@
 from typing import Callable
 from commands2 import Subsystem, Command
-from wpilib import SmartDashboard, SendableChooser
-from wpilib.drive import DifferentialDrive
+from wpilib import SmartDashboard
 from wpimath import units
-from wpimath.controller import PIDController, ProfiledPIDController
-from wpimath.trajectory import TrapezoidProfile
-from wpimath.filter import SlewRateLimiter
-from wpimath.geometry import Pose2d, Pose3d
-from wpimath.kinematics import ChassisSpeeds, DifferentialDriveWheelSpeeds
-from pathplannerlib.util import DriveFeedforwards
 from lib import logger, utils
-from lib.classes import State, MotorIdleMode, SpeedMode, DriveOrientation, TargetAlignmentMode, DifferentialModuleLocation, DifferentialDriveModulePositions
-from lib.components.differential_module import DifferentialModule
 import core.constants as constants
 
 import math
 from commands2 import Command, cmd, Subsystem
 from wpimath import units
 from wpilib import SmartDashboard
-from rev import SparkBase, SparkBaseConfig, SparkLowLevel, SparkMax, SparkFlex, LimitSwitchConfig
+from rev import SparkBase, SparkBaseConfig, SparkLowLevel, SparkMax, SparkFlex, LimitSwitchConfig, ResetMode, PersistMode
 from lib.classes import RelativePositionControlModuleConfig, MotorDirection, Value
 from lib import logger, utils
 
@@ -54,13 +45,7 @@ class LimitPositionControlModule:
     (self._motorConfig.softLimit
     .reverseSoftLimitEnabled(False)
     .forwardSoftLimitEnabled(False))
-    utils.setSparkConfig(
-      self._motor.configure(
-        self._motorConfig,
-        SparkBase.ResetMode.kResetSafeParameters,
-        SparkBase.PersistMode.kPersistParameters
-      )
-    )
+    utils.setSparkConfig(self._motor.configure(self._motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters))
     self._forwardLimit = self._motor.getForwardLimitSwitch()
     self._reverseLimit = self._motor.getReverseLimitSwitch()
     
@@ -85,7 +70,7 @@ class LimitPositionControlModule:
     self._targetPosition = position
     self._motor.set(0.5 * position)
 
-    self._isAtTargetPosition = math.isclose(self.getPosition(), self._targetPosition, abs_tol = self._config.constants.motorMotionAllowedClosedLoopError)
+    self._isAtTargetPosition = utils.isValueWithinTolerance(self.getPosition(), self._targetPosition, self._config.constants.motorMotionAllowedProfileError)
 
   def getPosition(self) -> float:
     if self._forwardLimit.get():
@@ -102,7 +87,7 @@ class LimitPositionControlModule:
     return self._isAtTargetPosition
 
   def setSoftLimitsEnabled(self, isEnabled: bool) -> None:
-    utils.setSparkSoftLimitsEnabled(self._motor, isEnabled)
+    utils.setSoftLimitsEnabled(self._motor, isEnabled)
   
   def hasZeroReset(self) -> bool:
     return self._hasZeroReset
@@ -117,6 +102,9 @@ class LimitPositionControlModule:
     SmartDashboard.putNumber(f'{self._baseKey}/Position', self.getPosition())
     SmartDashboard.putBoolean(f'{self._baseKey}/ForwardLimit', self._forwardLimit.get())
     SmartDashboard.putBoolean(f'{self._baseKey}/ReverseLimit', self._reverseLimit.get())
+
+
+
 
 
 class Arm(Subsystem):
@@ -136,24 +124,11 @@ class Arm(Subsystem):
       .smartCurrentLimit(self._config.constants.motorCurrentLimit)
       .inverted(self._config.isInverted))
     self._motorConfig.follow(10, True)
-    utils.setSparkConfig(
-      self._motor.configure(
-        self._motorConfig,
-        SparkBase.ResetMode.kResetSafeParameters,
-        SparkBase.PersistMode.kPersistParameters
-      )
-    )
-
+    utils.setSparkConfig(self._motor.configure(self._motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters))
 
   def periodic(self) -> None:
     self._updateTelemetry()
 
-  def setSpeed(self, getInput: Callable[[], units.percent]) -> Command:
-    return self.runEnd(
-      lambda: self._arm.setSpeed(getInput() * self._constants.INPUT_LIMIT),
-      lambda: self.reset()
-    ).withName("Arm:SetSpeed")
-  
   def setPosition(self, position: units.inches) -> Command:
     return self.run(
       lambda: self._arm.setPosition(position)

@@ -1,7 +1,7 @@
 from commands2 import Command, cmd
 from wpilib import DriverStation, SmartDashboard
 from lib import logger, utils
-from lib.controllers.xbox import Xbox
+from lib.controllers.xbox import XboxController
 from lib.sensors.gyro_navx2 import Gyro_NAVX2
 from lib.sensors.pose import PoseSensor
 from core.commands.auto import Auto
@@ -10,6 +10,8 @@ from core.subsystems.drive import Drive
 from core.subsystems.arm import Arm
 from core.subsystems.gripper import Gripper
 from core.services.localization import Localization
+from core.services.targeting import Targeting
+from core.services.match import Match
 import core.constants as constants
 
 class RobotCore:
@@ -17,8 +19,8 @@ class RobotCore:
     self._initSensors()
     self._initSubsystems()
     self._initServices()
-    self._initControllers()
     self._initCommands()
+    self._initControllers()
     self._initTriggers()
     self._initTelemetry()
     utils.addRobotPeriodic(self._periodic)
@@ -28,25 +30,23 @@ class RobotCore:
     self.poseSensors = tuple(PoseSensor(c) for c in constants.Sensors.Pose.POSE_SENSOR_CONFIGS)
     
   def _initSubsystems(self) -> None:
-    self.drive = Drive(self.gyro.getHeading)
+    self.drive = Drive(lambda: self.gyro.getHeading())
     self.arm = Arm()
     self.gripper = Gripper()
     
   def _initServices(self) -> None:
-    self.localization = Localization(
-      self.gyro.getRotation, 
-      self.drive.getModulePositions, 
-      self.poseSensors
-    )
-
-  def _initControllers(self) -> None:
-    self.driver = Xbox(constants.Controllers.DRIVER_CONTROLLER_PORT, constants.Controllers.INPUT_DEADBAND)
-    self.operator = Xbox(constants.Controllers.OPERATOR_CONTROLLER_PORT, constants.Controllers.INPUT_DEADBAND)
-    DriverStation.silenceJoystickConnectionWarning(not utils.isCompetitionMode())
+    self.localization = Localization(lambda: self.gyro.getHeading(), lambda: self.drive.getModulePositions(), self.poseSensors)
+    self.targeting = Targeting(lambda: self.localization.getRobotPose(), lambda: self.drive.getChassisSpeeds())
+    self.match = Match()
 
   def _initCommands(self) -> None:
     self.game = Game(self)
     self.auto = Auto(self)
+
+  def _initControllers(self) -> None:
+    DriverStation.silenceJoystickConnectionWarning(not utils.isCompetitionMode())
+    self.driver = XboxController(constants.Controllers.DRIVER_CONTROLLER_PORT, constants.Controllers.INPUT_DEADBAND)
+    self.operator = XboxController(constants.Controllers.OPERATOR_CONTROLLER_PORT, constants.Controllers.INPUT_DEADBAND)
 
   def _initTriggers(self) -> None:
     self._setupDriver()
@@ -71,10 +71,9 @@ class RobotCore:
     # self.driver.x().whileTrue(cmd.none())
     # self.driver.y().whileTrue(cmd.none())
     # self.driver.start().onTrue(cmd.none())
-    self.driver.back().whileTrue(cmd.waitSeconds(0.5).andThen(self.gyro.reset()))
+    self.driver.back().debounce(0.5).whileTrue(self.game.resetGyro())
 
   def _setupOperator(self) -> None:
-    pass
     # self.operator.rightTrigger().whileTrue(cmd.none())
     # self.operator.leftTrigger().whileTrue(cmd.none())
     # self.operator.rightBumper().whileTrue(cmd.none())
@@ -89,16 +88,17 @@ class RobotCore:
     # self.operator.x().whileTrue(cmd.none())
     # self.operator.start().whileTrue(cmd.none())
     # self.operator.back().whileTrue(cmd.none())
+    pass
 
   def _initTelemetry(self) -> None:
     SmartDashboard.putString("Game/Robot/Type", constants.Game.Robot.TYPE.name)
     SmartDashboard.putString("Game/Robot/Name", constants.Game.Robot.NAME)
     SmartDashboard.putNumber("Game/Field/Length", constants.Game.Field.LENGTH)
     SmartDashboard.putNumber("Game/Field/Width", constants.Game.Field.WIDTH)
-    SmartDashboard.putNumber("Robot/Drive/Chassis/Length", constants.Subsystems.Drive.CHASSIS_LENGTH)
-    SmartDashboard.putNumber("Robot/Drive/Chassis/Width", constants.Subsystems.Drive.CHASSIS_WIDTH)
+    SmartDashboard.putNumber("Robot/Drive/Length", constants.Subsystems.Drive.BUMPER_LENGTH)
+    SmartDashboard.putNumber("Robot/Drive/Width", constants.Subsystems.Drive.BUMPER_WIDTH)
     SmartDashboard.putString("Robot/Cameras/Driver", constants.Cameras.DRIVER_STREAM)
-    SmartDashboard.putStringArray("Robot/Sensors/Pose/Names", tuple(c.name for c in constants.Sensors.Pose.POSE_SENSOR_CONFIGS))
+    SmartDashboard.putStringArray("Robot/Sensors/Pose/Names", list(c.name for c in constants.Sensors.Pose.POSE_SENSOR_CONFIGS))
 
   def _periodic(self) -> None:
     self._updateTelemetry()
@@ -124,12 +124,12 @@ class RobotCore:
   def reset(self) -> None:
     self.drive.reset()
 
-  def _isHomed(self) -> bool:
-    return (
-      True
-      if not utils.isCompetitionMode() else 
-      True
-    )
+  def isHoming(self) -> bool:
+    return False
+
+  def isHomed(self) -> bool:
+    return True
 
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean("Robot/Status/IsHomed", self._isHomed())
+    SmartDashboard.putBoolean("Robot/Status/IsHoming", self.isHoming())
+    SmartDashboard.putBoolean("Robot/Status/IsHomed", self.isHomed())

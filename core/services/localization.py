@@ -1,42 +1,35 @@
 from typing import Callable
-import math
 from ntcore import NetworkTableInstance
 from wpilib import SmartDashboard, Timer
 from wpimath import units
-from wpimath.geometry import Rotation2d, Pose2d, Pose3d, Transform3d
+from wpimath.geometry import Rotation2d, Pose2d
 from wpimath.estimator import DifferentialDrivePoseEstimator
-from photonlibpy.photonPoseEstimator import PoseStrategy
 from lib import logger, utils
-from lib.classes import DifferentialDriveModulePositions
+from lib.classes import DifferentialModulePositions, RobotState, PoseSensorResult, PoseSensorResultType, Value
 from lib.sensors.pose import PoseSensor
-from core.classes import Target
 import core.constants as constants
 
 class Localization():
   def __init__(
       self,
-      getGyroRotation: Callable[[], Rotation2d],
-      getDriveModulePositions: Callable[[], DifferentialDriveModulePositions],
+      getGyroHeading: Callable[[], units.degrees],
+      getDriveModulePositions: Callable[[], DifferentialModulePositions],
       poseSensors: tuple[PoseSensor, ...]
     ) -> None:
-    super().__init__()
-    self._getGyroRotation = getGyroRotation
+    self._constants = constants.Services.Localization
+    self._getGyroHeading = getGyroHeading
     self._getDriveModulePositions = getDriveModulePositions
     self._poseSensors = poseSensors
 
     self._poseEstimator = DifferentialDrivePoseEstimator(
       constants.Subsystems.Drive.DRIVE_KINEMATICS,
-      self._getGyroRotation(),
+      Rotation2d.fromDegrees(self._getGyroHeading()),
       *self._getDriveModulePositions(),
       Pose2d()
     )
 
-    self._alliance = None
-    self._robotPose = Pose2d()
-    self._targets: dict[int, Target] = {}
-    self._targetPoses: list[Pose2d] = []
-    self._hasValidVisionTarget: bool = False
-    self._validVisionTargetBufferTimer = Timer()
+    self._hasValidPoseSensorResult: bool = False
+    self._validPoseSensorResultTimer = Timer()
     
     self._robotPosePublisher = NetworkTableInstance.getDefault().getStructTopic("/SmartDashboard/Robot/Localization/Pose", Pose2d).publish()
 
@@ -44,76 +37,71 @@ class Localization():
 
   def _periodic(self) -> None:
     self._updateRobotPose()
-    self._updateTargets()
     self._updateTelemetry()
 
   def _updateRobotPose(self) -> None:
-    self._poseEstimator.update(self._getGyroRotation(), *self._getDriveModulePositions())
-    hasVisionTarget = False
+    self._poseEstimator.update(Rotation2d.fromDegrees(self._getGyroHeading()), *self._getDriveModulePositions())
+    hasValidPoseSensorResult = False
     for poseSensor in self._poseSensors:
-      estimatedRobotPose = poseSensor.getEstimatedRobotPose()
-      if estimatedRobotPose is not None:
-        if self._isValidRobotPose(estimatedRobotPose.estimatedPose):
-          totalTargets = 0
-          totalDistance = 0
-          for target in estimatedRobotPose.targetsUsed:
-            distance = target.getBestCameraToTarget().translation().norm()
-            if self._isValidTarget(distance, target.getPoseAmbiguity(), estimatedRobotPose.strategy):
-              totalTargets += 1
-              totalDistance += distance
-          if totalTargets > 0:
-            hasVisionTarget = True
-            avgDistance = totalDistance / totalTargets
-            stdDevTranslation = 0.02 * avgDistance * avgDistance if totalTargets > 1 else 0.5 * avgDistance / 4.0
-            stdDevRotation = 0.3 * avgDistance * avgDistance if totalTargets > 1 else 1.0
-            self._poseEstimator.addVisionMeasurement(
-              estimatedRobotPose.estimatedPose.toPose2d(), 
-              estimatedRobotPose.timestampSeconds,
-              (stdDevTranslation, stdDevTranslation, stdDevRotation)
-            )
-    self._robotPose = self._poseEstimator.getEstimatedPosition()
-    if hasVisionTarget:
-      self._hasValidVisionTarget = True
-      self._validVisionTargetBufferTimer.restart()
+      poseSensorResult = poseSensor.getLatestResult()
+      if poseSensorResult is not None:
+        if self._isResultValid(poseSensorResult):
+          self._poseEstimator.addVisionMeasurement(
+            poseSensorResult.estimatedPose.toPose2d(), 
+            poseSensorResult.timestamp,
+            self._getStandardDeviations(poseSensorResult)
+          )
+          hasValidPoseSensorResult = True
+    if hasValidPoseSensorResult:
+      self._hasValidPoseSensorResult = True
+      self._validPoseSensorResultTimer.restart()
     else:
-      if self._hasValidVisionTarget and self._validVisionTargetBufferTimer.hasElapsed(0.1):
-        self._hasValidVisionTarget = False
+      if self._hasValidPoseSensorResult and self._validPoseSensorResultTimer.hasElapsed(self._constants.VALID_POSE_SENSOR_RESULT_TIMEOUT):
+        self._hasValidPoseSensorResult = False
 
-  def _isValidTarget(self, distance: units.meters, ambiguity: units.percent, strategy: PoseStrategy) -> bool:
-    return (
-      distance <= constants.Services.Localization.VISION_MAX_TARGET_DISTANCE and (
-        strategy == PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR or 
-        utils.isValueInRange(ambiguity, 0, constants.Services.Localization.VISION_MAX_POSE_AMBIGUITY)
+  def _isResultValid(self, poseSensorResult: PoseSensorResult) -> bool:
+    return (         
+      utils.isPoseWithinZone(poseSensorResult.estimatedPose.toPose2d(), constants.Game.Field.ZONE) 
+      and
+      poseSensorResult.bestTargetDistance <= self._constants.MAX_TARGET_DISTANCE 
+      and
+      (
+        poseSensorResult.resultType == PoseSensorResultType.SINGLE_TAG or 
+        poseSensorResult.bestTargetReprojectionError <= self._constants.MAX_TARGET_REPROJECTION_ERROR
+      )
+      and
+      (
+        poseSensorResult.resultType == PoseSensorResultType.MULTI_TAG or
+        poseSensorResult.bestTargetAmbiguity <= self._constants.MAX_TARGET_AMBIGUITY
+      )
+      and
+      (
+        utils.getRobotState() == RobotState.Disabled or 
+        poseSensorResult.resultType == PoseSensorResultType.MULTI_TAG or
+        utils.getTargetDistance(poseSensorResult.estimatedPose, self._poseEstimator.getEstimatedPosition()) <= self._constants.MAX_POSE_CHANGE
       )
     )
-
-  def _isValidRobotPose(self, pose: Pose3d) -> bool:
-    return (
-      utils.isPoseInBounds(pose.toPose2d(), constants.Game.Field.BOUNDS) and 
-      math.fabs(pose.Z()) <= constants.Services.Localization.VISION_MAX_GROUND_PLANE_DELTA
-    )
+  
+  def _getStandardDeviations(self, poseSensorResult: PoseSensorResult) -> tuple[float, float, float]:
+    stdDevXY = self._constants.STDDEV_XY_COEFF * poseSensorResult.bestTargetDistance
+    stdDevZ = self._constants.STDDEV_Z_COEFF * poseSensorResult.bestTargetDistance
+    if poseSensorResult.resultType == PoseSensorResultType.MULTI_TAG:
+      stdDevXY *= self._constants.STDDEV_TARGET_REPROJECTION_ERROR_SCALE_FACTOR * poseSensorResult.bestTargetReprojectionError
+      stdDevZ *= self._constants.STDDEV_TARGET_REPROJECTION_ERROR_SCALE_FACTOR * poseSensorResult.bestTargetReprojectionError
+    else: 
+      stdDevXY *= self._constants.STDDEV_TARGET_AMBIGUITY_SCALE_FACTOR * (poseSensorResult.bestTargetAmbiguity + 0.01)
+      stdDevZ = Value.max
+    return (stdDevXY, stdDevXY, stdDevZ)
 
   def getRobotPose(self) -> Pose2d:
-    return self._robotPose
+    return self._poseEstimator.getEstimatedPosition()
 
   def resetRobotPose(self, pose: Pose2d) -> None:
     self._poseEstimator.resetPose(pose)
-
-  def _updateTargets(self) -> None:
-    if utils.getAlliance() != self._alliance:
-      self._alliance = utils.getAlliance()
-      self._targets = constants.Game.Field.Targets.TARGETS[self._alliance]
-      self._targetPoses = [t.pose.toPose2d() for t in self._targets.values()]
-
-  def getTargetPose(self) -> Pose3d:
-    target = self._targets.get(utils.getTargetHash(self._robotPose.nearest(self._targetPoses)))
-    if target is not None:
-      return target.pose.transformBy(Transform3d())
-    return Pose3d(self._robotPose)
-
-  def hasValidVisionTarget(self) -> bool:
-    return self._hasValidVisionTarget
+  
+  def hasValidPoseSensorResult(self) -> bool:
+    return self._hasValidPoseSensorResult
 
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean("Robot/Localization/HasValidVisionTarget", self._hasValidVisionTarget)
-    self._robotPosePublisher.set(self._robotPose)
+    self._robotPosePublisher.set(self.getRobotPose())
+    SmartDashboard.putBoolean("Robot/Localization/HasValidPoseSensorResult", self.hasValidPoseSensorResult())

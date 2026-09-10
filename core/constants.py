@@ -1,56 +1,45 @@
 import wpilib
 from wpimath import units
-from wpimath.geometry import Translation2d
+from wpimath.geometry import Pose2d, Pose3d, Rotation3d, Translation2d, Rotation2d
 from wpimath.kinematics import DifferentialDriveKinematics
 from robotpy_apriltag import AprilTagFieldLayout
 from navx import AHRS
 from rev import SparkLowLevel
 from pathplannerlib.config import RobotConfig
 from pathplannerlib.controller import PPLTVController
-from photonlibpy.photonPoseEstimator import PoseStrategy
 from lib import logger, utils
 from lib.classes import (
-  RobotType,
-  Alliance, 
+  RobotType, 
+  Alliance,
   PID,
-  Range, 
-  Tolerance,
+  Zone,
+  Range,
+  MotorModel,
+  FeedForwardGains,
   DifferentialModuleConstants, 
   DifferentialModuleConfig, 
   DifferentialModuleLocation,
-  DriftCorrectionConstants, 
-  TargetAlignmentConstants,
-  PoseSensorConstants,
   PoseSensorConfig, 
   RelativePositionControlModuleConfig,
   RelativePositionControlModuleConstants
 )
-from core.classes import (
-  Target, 
-  TargetType
-)
+from core.classes import Target
+import lib.constants
 
 _aprilTagFieldLayout = AprilTagFieldLayout(f'{ wpilib.getDeployDirectory() }/localization/default.json')
-_pathPlannerRobotConfig = RobotConfig.fromGUISettings()
 
 class Subsystems:
   class Drive:
-    CHASSIS_LENGTH: units.meters = units.inchesToMeters(38.0)
-    CHASSIS_WIDTH: units.meters = units.inchesToMeters(25.5)
+    BUMPER_LENGTH: units.meters = units.inchesToMeters(38.0)
+    BUMPER_WIDTH: units.meters = units.inchesToMeters(25.5)
     WHEEL_BASE: units.meters = units.inchesToMeters(27.0)
     TRACK_WIDTH: units.meters = units.inchesToMeters(17.0)
-
-    TRANSLATION_SPEED_MAX: units.meters_per_second = 4.46
-    ROTATION_SPEED_MAX: units.degrees_per_second = 360.0
-
-    INPUT_LIMIT_DEMO: units.percent = 0.5
-    INPUT_RATE_LIMIT_DEMO: units.percent = 0.33
 
     _differentialModuleConstants = DifferentialModuleConstants(
       wheelDiameter = units.inchesToMeters(4.0),
       drivingMotorControllerType = SparkLowLevel.SparkModel.kSparkMax,
       drivingMotorType = SparkLowLevel.MotorType.kBrushless,
-      drivingMotorCurrentLimit = 80,
+      drivingMotorCurrentLimit = 60,
       drivingMotorReduction = 8.46
     )
 
@@ -63,42 +52,31 @@ class Subsystems:
 
     DRIVE_KINEMATICS = DifferentialDriveKinematics(TRACK_WIDTH)
 
-    PATHPLANNER_ROBOT_CONFIG = _pathPlannerRobotConfig
+    TRANSLATION_MAX_VELOCITY: units.meters_per_second = 4.46
+    ROTATION_MAX_VELOCITY: units.degrees_per_second = 360.0
+
+    PATHPLANNER_ROBOT_CONFIG = RobotConfig.fromGUISettings()
     PATHPLANNER_CONTROLLER = PPLTVController(0.02)
 
-    DRIFT_CORRECTION_CONSTANTS = DriftCorrectionConstants(
-      rotationPID = PID(0.01, 0, 0), 
-      rotationTolerance = Tolerance(0.5, 1.0)
-    )
-
-    TARGET_ALIGNMENT_CONSTANTS = TargetAlignmentConstants(
-      translationPID = PID(4.0, 0, 0),
-      translationMaxVelocity = 2.0,
-      translationMaxAcceleration = 1.0,
-      translationTolerance = Tolerance(0.05, 0.1),
-      rotationPID = PID(4.0, 0, 0), 
-      rotationMaxVelocity = 360.0,
-      rotationMaxAcceleration = 180.0,
-      rotationTolerance = Tolerance(0.5, 1.0),
-      rotationHeadingModeOffset = 0,
-      rotationTranslationModeOffset = 180.0
-    )
+    INPUT_LIMIT_DEMO: units.percent = 0.5
+    INPUT_RATE_LIMIT_DEMO: units.percent = 0.5
 
   class Arm:
     ARM_CONFIG = RelativePositionControlModuleConfig("Arm", 10, True, RelativePositionControlModuleConstants(
       motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
       motorType = SparkLowLevel.MotorType.kBrushed,
       motorCurrentLimit = 80,
-      motorReduction = 1.0 / 1.0,
+      motorRelativeEncoderPositionConversionFactor = 1.0,
       motorPID = PID(0.1, 0, 0.07),
       motorOutputRange = Range(-1.0, 0.3),
-      motorMotionMaxVelocity = 15000.0,
+      motorFeedForwardGains  = FeedForwardGains(velocity = 12.0 / lib.constants.Motors.MOTOR_FREE_SPEEDS[MotorModel.NEO]),
+      motorMotionCruiseVelocity = 15000.0,
       motorMotionMaxAcceleration = 30000.0,
-      motorMotionAllowedClosedLoopError = 0.25,
+      motorMotionAllowedProfileError = 0.25,
       motorSoftLimitForward = 35.0,
       motorSoftLimitReverse = 1.0,
-      motorResetSpeed = 0.4,
-      distancePerRotation = 1.0
+      motorHomingSpeed = 0.4,
+      motorHomedPosition = 0
     ))
 
     INPUT_LIMIT: units.percent = 1.0
@@ -112,9 +90,18 @@ class Subsystems:
 
 class Services:
   class Localization:
-    VISION_MAX_TARGET_DISTANCE: units.meters = 4.0
-    VISION_MAX_POSE_AMBIGUITY: units.percent = 0.2
-    VISION_MAX_GROUND_PLANE_DELTA: units.meters = 0.25
+    MAX_TARGET_AMBIGUITY: units.percent = 0.2
+    MAX_TARGET_REPROJECTION_ERROR: float = 1.0
+    MAX_TARGET_DISTANCE: units.meters = 5.0
+    MAX_POSE_CHANGE: units.meters = 1.0
+    STDDEV_XY_COEFF: float = 0.08
+    STDDEV_Z_COEFF: float = 0.1
+    STDDEV_TARGET_AMBIGUITY_SCALE_FACTOR: float = 5.0
+    STDDEV_TARGET_REPROJECTION_ERROR_SCALE_FACTOR: float = 2.5
+    VALID_POSE_SENSOR_RESULT_TIMEOUT: units.seconds = 0.3
+  
+  class Targeting:
+    pass
 
 class Sensors: 
   class Gyro:
@@ -122,18 +109,15 @@ class Sensors:
       COM_TYPE = AHRS.NavXComType.kMXP_SPI
 
   class Pose:
-    _poseSensorConstants = PoseSensorConstants(
-      aprilTagFieldLayout = _aprilTagFieldLayout,
-      poseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-      fallbackPoseStrategy = PoseStrategy.LOWEST_AMBIGUITY
-    )
-
     POSE_SENSOR_CONFIGS: tuple[PoseSensorConfig, ...] = (
       # PoseSensorConfig(
       #   name = "Front",
-      #   transform = Transform3d(Translation3d(0.149506, -0.055318, 0.271137), Rotation3d(-0.001852, -0.181301, 0.020370)),
+      #   transform = Transform3d(
+      #     Translation3d(x = units.inchesToMeters(4.25), y = units.inchesToMeters(-1.77), z = units.inchesToMeters(9.47)), 
+      #     Rotation3d(roll = units.degreesToRadians(-0.18), pitch = units.degreesToRadians(-32.77), yaw = units.degreesToRadians(-0.18))
+      #   ),
       #   stream = "http://10.28.81.6:1182/?action=stream", 
-      #   constants = _poseSensorConstants
+      #   aprilTagFieldLayout = _aprilTagFieldLayout
       # ),
     )
 
@@ -156,14 +140,19 @@ class Game:
   class Field:
     LENGTH = _aprilTagFieldLayout.getFieldLength()
     WIDTH = _aprilTagFieldLayout.getFieldWidth()
-    BOUNDS = (Translation2d(0, 0), Translation2d(LENGTH, WIDTH))
+    ZONE = Zone(start = Translation2d(0, 0), end = Translation2d(LENGTH, WIDTH))
 
     class Targets:
-      TARGETS: dict[Alliance, dict[int, Target]] = {
-        Alliance.Red: {
-          utils.getTargetHash(_aprilTagFieldLayout.getTagPose(1).toPose2d()): Target(TargetType.Default, _aprilTagFieldLayout.getTagPose(1))
-        },
+      TARGETS: dict[Alliance, dict[Target, Pose3d]] = {
         Alliance.Blue: {
-          utils.getTargetHash(_aprilTagFieldLayout.getTagPose(2).toPose2d()): Target(TargetType.Default, _aprilTagFieldLayout.getTagPose(2))
+          Target.Default: Pose3d(0, 0, 0, Rotation3d(Rotation2d.fromDegrees(0)))
+        },
+        Alliance.Red: {
+          Target.Default: Pose3d(0, 0, 0, Rotation3d(Rotation2d.fromDegrees(0)))
         }
+      }
+
+      TARGET_ZONES: dict[Alliance, dict[Target, Zone]] = {
+        Alliance.Blue: {},
+        Alliance.Red: {}
       }

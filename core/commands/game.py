@@ -2,25 +2,20 @@ from typing import TYPE_CHECKING
 from commands2 import Command, cmd
 from wpilib import RobotBase
 from lib import logger, utils
-from lib.classes import ControllerRumbleMode, ControllerRumblePattern, TargetAlignmentMode
-if TYPE_CHECKING: from core.robot import RobotCore
+from lib.classes import ControllerRumbleMode, ControllerRumblePattern
 import core.constants as constants
+if TYPE_CHECKING: from core.robot import RobotCore
 
 class Game:
-  def __init__(
-      self,
-      robot: "RobotCore"
-    ) -> None:
+  def __init__(self, robot: "RobotCore") -> None:
     self._robot = robot
 
-  def alignRobotToTarget(self, targetAlignmentMode: TargetAlignmentMode) -> Command:
+  def resetGyro(self) -> Command:
     return (
-      self._robot.drive.alignToTarget(
-        self._robot.localization.getRobotPose, 
-        lambda: self._robot.localization.getTargetPose(),
-        targetAlignmentMode)
+      self._robot.gyro.reset()
       .andThen(self.rumbleControllers(ControllerRumbleMode.Driver))
-      .withName(f'Game:AlignRobotToTarget:{ targetAlignmentMode.name }')
+      .ignoringDisable(True)
+      .withName("Game:ResetGyro")
     )
 
   def rumbleControllers(
