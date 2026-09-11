@@ -1,36 +1,34 @@
-from commands2 import Subsystem, cmd, Command
-from rev import SparkBaseConfig, SparkMax, ResetMode, PersistMode
+from commands2 import Subsystem, Command
+from lib import logger, utils
+from lib.components.speed_module import SpeedModule
+from lib.components.follower_module import FollowerModule
 import core.constants as constants
-from lib import utils  
 
 class Gripper(Subsystem):
   def __init__(self):
     super().__init__()
-    self._config = constants.Subsystems.Gripper
-    self._frontMotor = SparkMax(self._config.FRONT_MOTOR_CAN_ID, self._config.MOTOR_TYPE)
-    self._backMotor = SparkMax(self._config.BACK_MOTOR_CAN_ID, self._config.MOTOR_TYPE)
-    self._motorConfig = SparkBaseConfig()
-    (self._motorConfig
-      .setIdleMode(SparkBaseConfig.IdleMode.kBrake)
-      .smartCurrentLimit(self._config.MOTOR_CURRENT_LIMIT)
-      .inverted(False))
-    utils.setSparkConfig(self._frontMotor.configure(self._motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters))
-    utils.setSparkConfig(self._backMotor.configure(self._motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters))
+    self._constants = constants.Subsystems.Gripper
+
+    self._gripperLeader = SpeedModule(self._constants.GRIPPER_LEADER_CONFIG)
+    self._gripperFollower = FollowerModule(self._constants.GRIPPER_FOLLOWER_CONFIG)
+
+  def periodic(self) -> None:
+    self._updateTelemetry()
 
   def intake(self) -> Command:
-    return self.run(lambda: [
-      self._frontMotor.set(-self._config.MOTOR_SPEED),
-      self._backMotor.set(self._config.MOTOR_SPEED)
-    ])
+    return self.startEnd(
+      lambda: self._gripperLeader.setSpeed(-self._constants.GRIPPER_INTAKE_SPEED),
+      lambda: self.reset()
+    )
   
   def score(self) -> Command:
-    return self.run(lambda: [
-      self._frontMotor.set(self._config.MOTOR_SPEED),
-      self._backMotor.set(-self._config.MOTOR_SPEED)
-    ])
+    return self.startEnd(
+      lambda: self._gripperLeader.setSpeed(self._constants.GRIPPER_SCORE_SPEED),
+      lambda: self.reset()
+    )
 
-  def stop(self) -> Command:
-    return self.run(lambda: [
-      self._frontMotor.stopMotor(),
-      self._backMotor.stopMotor()
-    ])
+  def reset(self) -> None:
+    self._gripperLeader.reset()
+
+  def _updateTelemetry(self) -> None:
+    pass

@@ -1,150 +1,35 @@
-from typing import Callable
 from commands2 import Subsystem, Command
 from wpilib import SmartDashboard
-from wpimath import units
 from lib import logger, utils
+from lib.components.limit_position_control_module import LimitPositionControlModule
+from lib.components.follower_module import FollowerModule
 import core.constants as constants
-
-import math
-from commands2 import Command, cmd, Subsystem
-from wpimath import units
-from wpilib import SmartDashboard
-from rev import SparkBase, SparkBaseConfig, SparkLowLevel, SparkMax, SparkFlex, LimitSwitchConfig, ResetMode, PersistMode
-from lib.classes import RelativePositionControlModuleConfig, MotorDirection, Value
-from lib import logger, utils
-
-class LimitPositionControlModule:
-  def __init__(
-    self,
-    config: RelativePositionControlModuleConfig
-  ) -> None:
-    self._config = config
-
-    self._baseKey = f'Robot/{self._config.baseKey}'
-
-    self._hasZeroReset: bool = False
-    self._targetPosition: float = Value.none
-    self._isAtTargetPosition: bool = False
-
-    if self._config.constants.motorControllerType == SparkLowLevel.SparkModel.kSparkFlex:
-      self._motor = SparkFlex(self._config.motorCANId, self._config.constants.motorType)
-    else: 
-      self._motor = SparkMax(self._config.motorCANId, self._config.constants.motorType)
-    self._motorConfig = SparkBaseConfig()
-    (self._motorConfig
-      .setIdleMode(SparkBaseConfig.IdleMode.kBrake)
-      .smartCurrentLimit(self._config.constants.motorCurrentLimit)
-      .inverted(self._config.isInverted))
-    self._motorConfig.apply(
-        LimitSwitchConfig()
-        .forwardLimitSwitchEnabled(True)
-        .forwardLimitSwitchType(LimitSwitchConfig.Type.kNormallyClosed)
-        .reverseLimitSwitchEnabled(True)
-        .reverseLimitSwitchType(LimitSwitchConfig.Type.kNormallyClosed))
-
-    (self._motorConfig.softLimit
-    .reverseSoftLimitEnabled(False)
-    .forwardSoftLimitEnabled(False))
-    utils.setSparkConfig(self._motor.configure(self._motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters))
-    self._forwardLimit = self._motor.getForwardLimitSwitch()
-    self._reverseLimit = self._motor.getReverseLimitSwitch()
-    
-    utils.addRobotPeriodic(self._periodic)
-
-  def _periodic(self) -> None:
-    self._updateTelemetry()
-    
-  def setSpeed(self, speed: units.percent) -> None:
-    self._motor.set(-speed if self._config.isInverted else speed)
-    if speed != 0:
-      self._resetPosition()
-    
-  def setPosition(self, position: float) -> None:
-    if position < 0:
-       position = -1.0
-    elif position > 0:
-       position = 1.0
-    else:
-      position = 0.0
-
-    self._targetPosition = position
-    self._motor.set(0.5 * position)
-
-    self._isAtTargetPosition = utils.isValueWithinTolerance(self.getPosition(), self._targetPosition, self._config.constants.motorMotionAllowedProfileError)
-
-  def getPosition(self) -> float:
-    if self._forwardLimit.get():
-      return 1.0
-    if self._reverseLimit.get():
-      return -1.0
-    return 0.0
-
-  def _resetPosition(self) -> None:
-    self._targetPosition = Value.none
-    self._isAtTargetPosition = False
-
-  def isAtTargetPosition(self) -> bool:
-    return self._isAtTargetPosition
-
-  def setSoftLimitsEnabled(self, isEnabled: bool) -> None:
-    utils.setSoftLimitsEnabled(self._motor, isEnabled)
-  
-  def hasZeroReset(self) -> bool:
-    return self._hasZeroReset
-
-  def reset(self) -> None:
-    self._motor.stopMotor()
-    self._resetPosition()
-
-  def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean(f'{self._baseKey}/IsAtTargetPosition', self._isAtTargetPosition)
-    SmartDashboard.putNumber(f'{self._baseKey}/Current', self._motor.getOutputCurrent())
-    SmartDashboard.putNumber(f'{self._baseKey}/Position', self.getPosition())
-    SmartDashboard.putBoolean(f'{self._baseKey}/ForwardLimit', self._forwardLimit.get())
-    SmartDashboard.putBoolean(f'{self._baseKey}/ReverseLimit', self._reverseLimit.get())
-
-
-
-
 
 class Arm(Subsystem):
   def __init__(self) -> None:
     super().__init__()
     self._constants = constants.Subsystems.Arm
-    self._config = self._constants.ARM_CONFIG
 
-    self._hasInitialZeroReset: bool = False
-
-    self._arm = LimitPositionControlModule(self._config)
-
-    self._motor = SparkMax(11, self._config.constants.motorType)
-    self._motorConfig = SparkBaseConfig()
-    (self._motorConfig
-      .setIdleMode(SparkBaseConfig.IdleMode.kBrake)
-      .smartCurrentLimit(self._config.constants.motorCurrentLimit)
-      .inverted(self._config.isInverted))
-    self._motorConfig.follow(10, True)
-    utils.setSparkConfig(self._motor.configure(self._motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters))
+    self._armLeader = LimitPositionControlModule(self._constants.ARM_LEADER_CONFIG)
+    self._armFollower = FollowerModule(self._constants.ARM_FOLLOWER_CONFIG)
 
   def periodic(self) -> None:
     self._updateTelemetry()
 
-  def setPosition(self, position: units.inches) -> Command:
-    return self.run(
-      lambda: self._arm.setPosition(position)
+  def setPosition(self, position: float) -> Command:
+    return self.startEnd(
+      lambda: self._armLeader.setPosition(position),
+      lambda: self._armLeader.setPosition(0)
     ).withName("Arm:SetPosition")
   
-  def getPosition(self) -> units.inches:
-    return self._arm.getPosition()
+  def getPosition(self) -> float:
+    return self._armLeader.getPosition()
 
   def isAtTargetPosition(self) -> bool:
-    return self._arm.isAtTargetPosition()
+    return self._armLeader.isAtTargetPosition()
 
   def reset(self) -> None:
-    self._arm.reset()
+    self._armLeader.reset()
 
   def _updateTelemetry(self) -> None:
     SmartDashboard.putBoolean("Robot/Arm/IsAtTargetPosition", self.isAtTargetPosition())
-
-    
-    

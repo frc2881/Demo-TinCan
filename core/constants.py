@@ -1,6 +1,6 @@
 import wpilib
 from wpimath import units
-from wpimath.geometry import Pose2d, Pose3d, Rotation3d, Translation2d, Rotation2d
+from wpimath.geometry import Pose3d, Rotation3d, Translation2d, Rotation2d
 from wpimath.kinematics import DifferentialDriveKinematics
 from robotpy_apriltag import AprilTagFieldLayout
 from navx import AHRS
@@ -11,17 +11,17 @@ from lib import logger, utils
 from lib.classes import (
   RobotType, 
   Alliance,
-  PID,
   Zone,
-  Range,
-  MotorModel,
-  FeedForwardGains,
   DifferentialModuleConstants, 
   DifferentialModuleConfig, 
   DifferentialModuleLocation,
-  PoseSensorConfig, 
-  RelativePositionControlModuleConfig,
-  RelativePositionControlModuleConstants
+  PoseSensorConfig,
+  LimitPositionControlModuleConfig,
+  LimitPositionControlModuleConstants,
+  SpeedModuleConfig,
+  SpeedModuleConstants,
+  FollowerModuleConfig,
+  FollowerModuleConstants
 )
 from core.classes import Target
 import lib.constants
@@ -39,7 +39,7 @@ class Subsystems:
       wheelDiameter = units.inchesToMeters(4.0),
       drivingMotorControllerType = SparkLowLevel.SparkModel.kSparkMax,
       drivingMotorType = SparkLowLevel.MotorType.kBrushless,
-      drivingMotorCurrentLimit = 60,
+      drivingMotorCurrentLimit = 50,
       drivingMotorReduction = 8.46
     )
 
@@ -62,31 +62,35 @@ class Subsystems:
     INPUT_RATE_LIMIT_DEMO: units.percent = 0.5
 
   class Arm:
-    ARM_CONFIG = RelativePositionControlModuleConfig("Arm", 10, True, RelativePositionControlModuleConstants(
+    ARM_LEADER_CONFIG = LimitPositionControlModuleConfig("Arm/Leader", 10, True, LimitPositionControlModuleConstants(
       motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
       motorType = SparkLowLevel.MotorType.kBrushed,
       motorCurrentLimit = 80,
-      motorRelativeEncoderPositionConversionFactor = 1.0,
-      motorPID = PID(0.1, 0, 0.07),
-      motorOutputRange = Range(-1.0, 0.3),
-      motorFeedForwardGains  = FeedForwardGains(velocity = 12.0 / lib.constants.Motors.MOTOR_FREE_SPEEDS[MotorModel.NEO]),
-      motorMotionCruiseVelocity = 15000.0,
-      motorMotionMaxAcceleration = 30000.0,
-      motorMotionAllowedProfileError = 0.25,
-      motorSoftLimitForward = 35.0,
-      motorSoftLimitReverse = 1.0,
-      motorHomingSpeed = 0.4,
-      motorHomedPosition = 0
+      motorMaxSpeed = 1.0,
+      motorAllowedPositionError = 0.01
     ))
 
-    INPUT_LIMIT: units.percent = 1.0
+    ARM_FOLLOWER_CONFIG = FollowerModuleConfig("Arm/Follower", 11, 10, True, FollowerModuleConstants(
+      motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
+      motorType = SparkLowLevel.MotorType.kBrushless,
+      motorCurrentLimit = ARM_LEADER_CONFIG.constants.motorCurrentLimit
+    ))
 
   class Gripper:
-    FRONT_MOTOR_CAN_ID = 12
-    BACK_MOTOR_CAN_ID = 13
-    MOTOR_TYPE = SparkLowLevel.MotorType.kBrushed 
-    MOTOR_SPEED: units.percent = 1.0
-    MOTOR_CURRENT_LIMIT = 20
+    GRIPPER_LEADER_CONFIG = SpeedModuleConfig("Gripper/Leader", 12, False, SpeedModuleConstants(
+      motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
+      motorType = SparkLowLevel.MotorType.kBrushed,
+      motorCurrentLimit = 20
+    ))
+
+    GRIPPER_FOLLOWER_CONFIG = FollowerModuleConfig("Gripper/Follower", 13, 12, True, FollowerModuleConstants(
+      motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
+      motorType = SparkLowLevel.MotorType.kBrushless,
+      motorCurrentLimit = GRIPPER_LEADER_CONFIG.constants.motorCurrentLimit
+    ))
+
+    GRIPPER_INTAKE_SPEED: units.percent = 1.0
+    GRIPPER_SCORE_SPEED: units.percent = 1.0
 
 class Services:
   class Localization:
