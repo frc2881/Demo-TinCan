@@ -28,6 +28,8 @@ class Drive(Subsystem):
       self._modules[DifferentialModuleLocation.Right].getMotorController()
     )
 
+    self._drivetrain.setExpiration(0.1)
+
     self._translationInputLimiter = SlewRateLimiter(self._constants.INPUT_RATE_LIMIT_DEMO)
     self._rotationInputLimiter = SlewRateLimiter(self._constants.INPUT_RATE_LIMIT_DEMO)
 
