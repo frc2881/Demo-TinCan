@@ -12,6 +12,7 @@ from lib.classes import (
   RobotType, 
   Alliance,
   Zone,
+  Range,
   DifferentialModuleConstants, 
   DifferentialModuleConfig, 
   DifferentialModuleLocation,
@@ -66,8 +67,7 @@ class Subsystems:
       motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
       motorType = SparkLowLevel.MotorType.kBrushed,
       motorCurrentLimit = 80,
-      motorMaxSpeed = 1.0,
-      motorAllowedPositionError = 0.01
+      motorOutputRange = Range(-1.0, 1.0)
     ))
 
     ARM_FOLLOWER_CONFIG = FollowerModuleConfig("Arm/Follower", 11, 10, True, FollowerModuleConstants(

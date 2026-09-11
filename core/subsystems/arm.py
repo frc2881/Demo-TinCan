@@ -1,6 +1,7 @@
 from commands2 import Subsystem, Command
 from wpilib import SmartDashboard
 from lib import logger, utils
+from lib.classes import Position
 from lib.components.limit_position_control_module import LimitPositionControlModule
 from lib.components.follower_module import FollowerModule
 import core.constants as constants
@@ -16,14 +17,17 @@ class Arm(Subsystem):
   def periodic(self) -> None:
     self._updateTelemetry()
 
-  def setPosition(self, position: float) -> Command:
+  def setForward(self) -> Command:
     return self.startEnd(
-      lambda: self._armLeader.setPosition(position),
-      lambda: self._armLeader.setPosition(0)
-    ).withName("Arm:SetPosition")
-  
-  def getPosition(self) -> float:
-    return self._armLeader.getPosition()
+      lambda: self._armLeader.setPosition(Position.Forward),
+      lambda: self._armLeader.reset()
+    ).withName("Arm:SetForward")
+
+  def setBackward(self) -> Command:
+    return self.startEnd(
+      lambda: self._armLeader.setPosition(Position.Backward),
+      lambda: self._armLeader.reset()
+    ).withName("Arm:SetBackward")
 
   def isAtTargetPosition(self) -> bool:
     return self._armLeader.isAtTargetPosition()
