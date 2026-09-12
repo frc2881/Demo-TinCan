@@ -67,12 +67,12 @@ class Subsystems:
       motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
       motorType = SparkLowLevel.MotorType.kBrushed,
       motorCurrentLimit = 80,
-      motorOutputRange = Range(-1.0, 1.0)
+      motorOutputRange = Range(-0.5, 0.5)
     ))
 
-    ARM_FOLLOWER_CONFIG = FollowerModuleConfig("Arm/Follower", 11, 10, True, FollowerModuleConstants(
+    ARM_FOLLOWER_CONFIG = FollowerModuleConfig("Arm/Follower", 11, 10, False, FollowerModuleConstants(
       motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
-      motorType = SparkLowLevel.MotorType.kBrushless,
+      motorType = SparkLowLevel.MotorType.kBrushed,
       motorCurrentLimit = ARM_LEADER_CONFIG.constants.motorCurrentLimit
     ))
 
@@ -85,7 +85,7 @@ class Subsystems:
 
     GRIPPER_FOLLOWER_CONFIG = FollowerModuleConfig("Gripper/Follower", 13, 12, True, FollowerModuleConstants(
       motorControllerType = SparkLowLevel.SparkModel.kSparkMax,
-      motorType = SparkLowLevel.MotorType.kBrushless,
+      motorType = SparkLowLevel.MotorType.kBrushed,
       motorCurrentLimit = GRIPPER_LEADER_CONFIG.constants.motorCurrentLimit
     ))
 
