@@ -2,16 +2,11 @@ from commands2 import Command, cmd
 from wpilib import DriverStation, SmartDashboard
 from lib import logger, utils
 from lib.controllers.xbox import XboxController
-from lib.sensors.gyro_navx2 import Gyro_NAVX2
-from lib.sensors.pose import PoseSensor
 from core.commands.auto import Auto
 from core.commands.game import Game
 from core.subsystems.drive import Drive 
 from core.subsystems.arm import Arm
 from core.subsystems.gripper import Gripper
-from core.services.localization import Localization
-from core.services.targeting import Targeting
-from core.services.match import Match
 import core.constants as constants
 
 class RobotCore:
@@ -26,18 +21,15 @@ class RobotCore:
     utils.addRobotPeriodic(self._periodic)
 
   def _initSensors(self) -> None:
-    self.gyro = Gyro_NAVX2(constants.Sensors.Gyro.NAVX2.COM_TYPE)
-    self.poseSensors = tuple(PoseSensor(c) for c in constants.Sensors.Pose.POSE_SENSOR_CONFIGS)
+    pass
     
   def _initSubsystems(self) -> None:
-    self.drive = Drive(lambda: self.gyro.getHeading())
+    self.drive = Drive()
     self.arm = Arm()
     self.gripper = Gripper()
     
   def _initServices(self) -> None:
-    self.localization = Localization(lambda: self.gyro.getHeading(), lambda: self.drive.getModulePositions(), self.poseSensors)
-    self.targeting = Targeting(lambda: self.localization.getRobotPose(), lambda: self.drive.getChassisSpeeds())
-    self.match = Match()
+    pass
 
   def _initCommands(self) -> None:
     self.game = Game(self)
@@ -46,11 +38,9 @@ class RobotCore:
   def _initControllers(self) -> None:
     DriverStation.silenceJoystickConnectionWarning(not utils.isCompetitionMode())
     self.driver = XboxController(constants.Controllers.DRIVER_CONTROLLER_PORT, constants.Controllers.INPUT_DEADBAND)
-    self.operator = XboxController(constants.Controllers.OPERATOR_CONTROLLER_PORT, constants.Controllers.INPUT_DEADBAND)
 
   def _initTriggers(self) -> None:
     self._setupDriver()
-    self._setupOperator()
 
   def _setupDriver(self) -> None:
     self.drive.setDefaultCommand(self.drive.drive(self.driver.getLeftY, self.driver.getRightX))
@@ -69,34 +59,11 @@ class RobotCore:
     # self.driver.povLeft().whileTrue(cmd.none())
     # self.driver.povRight().whileTrue(cmd.none())
     # self.driver.start().onTrue(cmd.none())
-    self.driver.back().debounce(0.5).whileTrue(self.game.resetGyro())
-
-  def _setupOperator(self) -> None:
-    # self.operator.leftTrigger().whileTrue(cmd.none())
-    # self.operator.rightTrigger().whileTrue(cmd.none())
-    # self.operator.leftBumper().whileTrue(cmd.none())
-    # self.operator.rightBumper().whileTrue(cmd.none())
-    # self.operator.a().whileTrue(cmd.none())
-    # self.operator.b().whileTrue(cmd.none())
-    # self.operator.y().whileTrue(cmd.none())
-    # self.operator.x().whileTrue(cmd.none())
-    # self.operator.povUp().whileTrue(cmd.none())
-    # self.operator.povDown().whileTrue(cmd.none())
-    # self.operator.povLeft().whileTrue(cmd.none())
-    # self.operator.povRight().whileTrue(cmd.none())
-    # self.operator.start().whileTrue(cmd.none())
-    # self.operator.back().whileTrue(cmd.none())
-    pass
+    # self.driver.back().whileTrue(cmd.none())
 
   def _initTelemetry(self) -> None:
     SmartDashboard.putString("Game/Robot/Type", constants.Game.Robot.TYPE.name)
     SmartDashboard.putString("Game/Robot/Name", constants.Game.Robot.NAME)
-    SmartDashboard.putNumber("Game/Field/Length", constants.Game.Field.LENGTH)
-    SmartDashboard.putNumber("Game/Field/Width", constants.Game.Field.WIDTH)
-    SmartDashboard.putNumber("Robot/Drive/Length", constants.Subsystems.Drive.BUMPER_LENGTH)
-    SmartDashboard.putNumber("Robot/Drive/Width", constants.Subsystems.Drive.BUMPER_WIDTH)
-    SmartDashboard.putString("Robot/Cameras/Driver", constants.Cameras.DRIVER_STREAM)
-    SmartDashboard.putStringArray("Robot/Sensors/Pose/Names", list(c.name for c in constants.Sensors.Pose.POSE_SENSOR_CONFIGS))
 
   def _periodic(self) -> None:
     self._updateTelemetry()
@@ -108,7 +75,7 @@ class RobotCore:
     self.reset()
 
   def autoExit(self) -> None: 
-    self.gyro.resetRobotToField(self.localization.getRobotPose())
+    pass
 
   def teleopInit(self) -> None:
     self.reset()
