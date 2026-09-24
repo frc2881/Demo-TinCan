@@ -1,6 +1,6 @@
 from wpimath import units
 from rev import SparkLowLevel
-from lib import logger, utils
+from lib import logger, telemetry, utils
 from lib.classes import (
   RobotType, 
   Range,

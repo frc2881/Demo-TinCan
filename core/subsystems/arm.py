@@ -1,6 +1,5 @@
 from commands2 import Subsystem, Command
-from wpilib import SmartDashboard
-from lib import logger, utils
+from lib import logger, telemetry, utils
 from lib.classes import Position
 from lib.components.limit_position_control_module import LimitPositionControlModule
 from lib.components.follower_module import FollowerModule
@@ -36,4 +35,4 @@ class Arm(Subsystem):
     self._armLeader.reset()
 
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean("Robot/Arm/IsAtTargetPosition", self.isAtTargetPosition())
+    telemetry.log("Robot/Arm/IsAtTargetPosition", self.isAtTargetPosition())

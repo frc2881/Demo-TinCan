@@ -1,6 +1,6 @@
 from commands2 import Command, cmd
-from wpilib import DriverStation, SmartDashboard
-from lib import logger, utils
+from wpilib import DriverStation
+from lib import logger, telemetry, utils
 from lib.controllers.xbox import XboxController
 from core.commands.auto import Auto
 from core.commands.game import Game
@@ -62,8 +62,8 @@ class RobotCore:
     # self.driver.back().whileTrue(cmd.none())
 
   def _initTelemetry(self) -> None:
-    SmartDashboard.putString("Game/Robot/Type", constants.Game.Robot.TYPE.name)
-    SmartDashboard.putString("Game/Robot/Name", constants.Game.Robot.NAME)
+    telemetry.log("Game/Robot/Type", constants.Game.Robot.TYPE.name)
+    telemetry.log("Game/Robot/Name", constants.Game.Robot.NAME)
 
   def _periodic(self) -> None:
     self._updateTelemetry()
@@ -96,5 +96,5 @@ class RobotCore:
     return True
 
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean("Robot/Status/IsHoming", self.isHoming())
-    SmartDashboard.putBoolean("Robot/Status/IsHomed", self.isHomed())
+    telemetry.log("Robot/Status/IsHoming", self.isHoming())
+    telemetry.log("Robot/Status/IsHomed", self.isHomed())

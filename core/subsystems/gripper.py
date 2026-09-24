@@ -1,5 +1,5 @@
 from commands2 import Subsystem, Command
-from lib import logger, utils
+from lib import logger, telemetry, utils
 from lib.components.speed_module import SpeedModule
 from lib.components.follower_module import FollowerModule
 import core.constants as constants

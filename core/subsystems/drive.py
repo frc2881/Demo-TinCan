@@ -3,7 +3,7 @@ from commands2 import Subsystem, Command
 from wpilib.drive import DifferentialDrive
 from wpimath import units
 from wpimath.filter import SlewRateLimiter
-from lib import logger, utils
+from lib import logger, telemetry, utils
 from lib.classes import DifferentialModuleLocation
 from lib.components.differential_module import DifferentialModule
 import core.constants as constants
