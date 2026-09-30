@@ -2,7 +2,7 @@ from commands2 import Subsystem, Command
 from lib import logger, telemetry, utils
 from lib.classes import Position
 from lib.components.limit_position_control_module import LimitPositionControlModule
-from lib.components.follower_module import FollowerModule
+from lib.components.follower_control_module import FollowerControlModule
 import core.constants as constants
 
 class Arm(Subsystem):
@@ -10,8 +10,10 @@ class Arm(Subsystem):
     super().__init__()
     self._constants = constants.Subsystems.Arm
 
+    self._telemetryName = "Robot/Subsystems/Arm"
+
     self._armLeader = LimitPositionControlModule(self._constants.ARM_LEADER_CONFIG)
-    self._armFollower = FollowerModule(self._constants.ARM_FOLLOWER_CONFIG)
+    self._armFollower = FollowerControlModule(self._constants.ARM_FOLLOWER_CONFIG)
 
   def periodic(self) -> None:
     self._updateTelemetry()
@@ -35,4 +37,4 @@ class Arm(Subsystem):
     self._armLeader.reset()
 
   def _updateTelemetry(self) -> None:
-    telemetry.log("Robot/Arm/IsAtTargetPosition", self.isAtTargetPosition())
+    telemetry.log(f'{self._telemetryName}/IsAtTargetPosition', self.isAtTargetPosition())

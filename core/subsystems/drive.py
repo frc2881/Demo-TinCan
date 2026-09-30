@@ -1,11 +1,11 @@
 from typing import Callable
-from commands2 import Subsystem, Command
 from wpilib.drive import DifferentialDrive
 from wpimath import units
 from wpimath.filter import SlewRateLimiter
+from commands2 import Subsystem, Command
 from lib import logger, telemetry, utils
-from lib.classes import DifferentialModuleLocation
-from lib.components.differential_module import DifferentialModule
+from lib.classes import DifferentialDriveModuleLocation
+from lib.components.differential_drive_module import DifferentialDriveModule
 import core.constants as constants
 
 class Drive(Subsystem):
@@ -15,11 +15,13 @@ class Drive(Subsystem):
     super().__init__()
     self._constants = constants.Subsystems.Drive
 
-    self._modules = tuple(DifferentialModule(c) for c in self._constants.DIFFERENTIAL_MODULE_CONFIGS)
+    self._telemetryName = "Robot/Subsystems/Drive"
+
+    self._modules = tuple(DifferentialDriveModule(c) for c in self._constants.DIFFERENTIAL_MODULE_CONFIGS)
 
     self._drivetrain = DifferentialDrive(
-      self._modules[DifferentialModuleLocation.Left].getMotorController(),
-      self._modules[DifferentialModuleLocation.Right].getMotorController()
+      self._modules[DifferentialDriveModuleLocation.Left].getController(),
+      self._modules[DifferentialDriveModuleLocation.Right].getController()
     )
 
     self._drivetrain.setExpiration(0.1)

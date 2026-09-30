@@ -1,7 +1,7 @@
 from commands2 import Subsystem, Command
 from lib import logger, telemetry, utils
-from lib.components.speed_module import SpeedModule
-from lib.components.follower_module import FollowerModule
+from lib.components.speed_control_module import SpeedControlModule
+from lib.components.follower_control_module import FollowerControlModule
 import core.constants as constants
 
 class Gripper(Subsystem):
@@ -9,8 +9,10 @@ class Gripper(Subsystem):
     super().__init__()
     self._constants = constants.Subsystems.Gripper
 
-    self._gripperLeader = SpeedModule(self._constants.GRIPPER_LEADER_CONFIG)
-    self._gripperFollower = FollowerModule(self._constants.GRIPPER_FOLLOWER_CONFIG)
+    self._telemetryName = "Robot/Subsystems/Gripper"
+
+    self._gripperLeader = SpeedControlModule(self._constants.GRIPPER_LEADER_CONFIG)
+    self._gripperFollower = FollowerControlModule(self._constants.GRIPPER_FOLLOWER_CONFIG)
 
   def periodic(self) -> None:
     self._updateTelemetry()

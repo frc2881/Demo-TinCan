@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from commands2 import Command, cmd
 from wpilib import RobotBase
+from commands2 import Command, cmd
 from lib import logger, telemetry, utils
 from lib.classes import ControllerRumbleMode, ControllerRumblePattern
 import core.constants as constants
@@ -16,7 +16,8 @@ class Game:
     pattern: ControllerRumblePattern = ControllerRumblePattern.Short
   ) -> Command:
     return cmd.parallel(
-      self._robot.driver.rumble(pattern).onlyIf(lambda: mode != ControllerRumbleMode.Operator)
+      self._robot.driver.rumble(pattern).onlyIf(lambda: mode != ControllerRumbleMode.Operator),
+      # self._robot.operator.rumble(pattern).onlyIf(lambda: mode != ControllerRumbleMode.Driver)
     ).onlyIf(
       lambda: RobotBase.isReal() and not utils.isAutonomousMode()
     ).withName(f'Game:RumbleControllers:{ mode.name }:{ pattern.name }')
