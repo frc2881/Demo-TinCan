@@ -20,13 +20,13 @@ class Arm(Subsystem):
 
   def setForward(self) -> Command:
     return self.startEnd(
-      lambda: self._armLeader.setPosition(Position.Forward),
+      lambda: self._armLeader.setPosition(Position.FORWARD),
       lambda: self._armLeader.reset()
     ).withName("Arm:SetForward")
 
   def setBackward(self) -> Command:
     return self.startEnd(
-      lambda: self._armLeader.setPosition(Position.Backward),
+      lambda: self._armLeader.setPosition(Position.BACKWARD),
       lambda: self._armLeader.reset()
     ).withName("Arm:SetBackward")
 

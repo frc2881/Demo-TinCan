@@ -20,8 +20,8 @@ class Drive(Subsystem):
     self._modules = tuple(DifferentialDriveModule(c) for c in self._constants.DIFFERENTIAL_MODULE_CONFIGS)
 
     self._drivetrain = DifferentialDrive(
-      self._modules[DifferentialDriveModuleLocation.Left].getController(),
-      self._modules[DifferentialDriveModuleLocation.Right].getController()
+      self._modules[DifferentialDriveModuleLocation.LEFT].getController(),
+      self._modules[DifferentialDriveModuleLocation.RIGHT].getController()
     )
 
     self._drivetrain.setExpiration(0.1)

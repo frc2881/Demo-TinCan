@@ -12,12 +12,12 @@ class Game:
 
   def rumbleControllers(
     self, 
-    mode: ControllerRumbleMode = ControllerRumbleMode.Both, 
-    pattern: ControllerRumblePattern = ControllerRumblePattern.Short
+    mode: ControllerRumbleMode = ControllerRumbleMode.BOTH, 
+    pattern: ControllerRumblePattern = ControllerRumblePattern.SHORT
   ) -> Command:
     return cmd.parallel(
-      self._robot.driver.rumble(pattern).onlyIf(lambda: mode != ControllerRumbleMode.Operator),
-      # self._robot.operator.rumble(pattern).onlyIf(lambda: mode != ControllerRumbleMode.Driver)
+      self._robot.driver.rumble(pattern).onlyIf(lambda: mode != ControllerRumbleMode.OPERATOR),
+      # self._robot.operator.rumble(pattern).onlyIf(lambda: mode != ControllerRumbleMode.DRIVER)
     ).onlyIf(
       lambda: RobotBase.isReal() and not utils.isAutonomousMode()
     ).withName(f'Game:RumbleControllers:{ mode.name }:{ pattern.name }')

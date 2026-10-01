@@ -26,10 +26,10 @@ class Subsystems:
     )
 
     DIFFERENTIAL_MODULE_CONFIGS: tuple[DifferentialDriveModuleConfig, ...] = (
-      DifferentialDriveModuleConfig(DifferentialDriveModuleLocation.Left, 2, None, True, _differentialModuleConstants),
-      DifferentialDriveModuleConfig(DifferentialDriveModuleLocation.Right, 4, None, False, _differentialModuleConstants),
-      DifferentialDriveModuleConfig(DifferentialDriveModuleLocation.Left, 3, 2, True, _differentialModuleConstants),
-      DifferentialDriveModuleConfig(DifferentialDriveModuleLocation.Right, 5, 4, False, _differentialModuleConstants)
+      DifferentialDriveModuleConfig(DifferentialDriveModuleLocation.LEFT, 2, None, True, _differentialModuleConstants),
+      DifferentialDriveModuleConfig(DifferentialDriveModuleLocation.RIGHT, 4, None, False, _differentialModuleConstants),
+      DifferentialDriveModuleConfig(DifferentialDriveModuleLocation.LEFT, 3, 2, True, _differentialModuleConstants),
+      DifferentialDriveModuleConfig(DifferentialDriveModuleLocation.RIGHT, 5, 4, False, _differentialModuleConstants)
     )
 
     INPUT_LIMIT_DEMO: units.percent = 0.5
@@ -86,7 +86,7 @@ class Controllers:
 
 class Game:
   class Robot:
-    TYPE = RobotType.Demo
+    TYPE = RobotType.DEMO
     NAME: str = "TinCan (Demo)"
 
   class Commands:
