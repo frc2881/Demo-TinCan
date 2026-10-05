@@ -5,7 +5,7 @@ from wpimath.filter import SlewRateLimiter
 from commands2 import Subsystem, Command
 from lib import logger, telemetry, utils
 from lib.classes import DifferentialDriveModuleLocation
-from lib.components.differential_drive_module import DifferentialDriveModule
+from lib.modules.differential_drive import DifferentialDriveModule
 import core.constants as constants
 
 class Drive(Subsystem):

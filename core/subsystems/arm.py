@@ -1,8 +1,8 @@
 from commands2 import Subsystem, Command
 from lib import logger, telemetry, utils
 from lib.classes import Position
-from lib.components.limit_position_control_module import LimitPositionControlModule
-from lib.components.follower_control_module import FollowerControlModule
+from lib.modules.limit_position_control import LimitPositionControlModule
+from lib.modules.follower_control import FollowerControlModule
 import core.constants as constants
 
 class Arm(Subsystem):

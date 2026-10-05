@@ -1,7 +1,7 @@
 from commands2 import Subsystem, Command
 from lib import logger, telemetry, utils
-from lib.components.speed_control_module import SpeedControlModule
-from lib.components.follower_control_module import FollowerControlModule
+from lib.modules.speed_control import SpeedControlModule
+from lib.modules.follower_control import FollowerControlModule
 import core.constants as constants
 
 class Gripper(Subsystem):
